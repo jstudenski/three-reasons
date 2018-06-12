@@ -1,21 +1,26 @@
 [%bs.raw {|require('./App.css')|}];
 
-[@bs.module] external logo : string = "./logo.svg";
+type state = {
+  playing: bool
+};
 
-let component = ReasonReact.statelessComponent("App");
+type action =
+ | Toggle;
 
-let make = (~message, _children) => {
+let component = ReasonReact.reducerComponent("App");
+
+let make = (_children) => {
   ...component,
-  render: _self =>
+  initialState: () => { playing: false },
+  reducer: (action, state) => switch(action) {
+    | Toggle => ReasonReact.Update({ playing: !state.playing })
+  },
+  render: self =>
     <div className="App">
-      <div className="App-header">
-        <img src=logo className="App-logo" alt="logo" />
-        <h2> (ReasonReact.string(message)) </h2>
-      </div>
-      <p className="App-intro">
-        (ReasonReact.string("To get started, edit"))
-        <code> (ReasonReact.string(" src/App.re ")) </code>
-        (ReasonReact.string("and save to reload."))
-      </p>
+      <button onClick={_ => self.send(Toggle)}>
+        (ReasonReact.string(
+          self.state.playing ? "Pause" : "Play"
+        ))
+      </button>
     </div>,
 };
