@@ -10,6 +10,7 @@ type axis =
  | Y;
 
 type action =
+  | Ready(option(Dom.element))
   | Rotate(axis, int);
 
 let component = ReasonReact.reducerComponent("App");
@@ -19,6 +20,14 @@ let make = (_children) => {
   initialState: () => { rotationX: 5, rotationY: 9 },
   reducer: (action, state: state) => {
     switch(action) {
+      | Ready(option) => {
+        switch (option) {
+          | None => ReasonReact.NoUpdate
+          | Some(el) => ReasonReact.SideEffects(_ => {
+            Js.log(el);
+          })
+        }
+      }
       | Rotate(axis, rotation) => {
         switch(axis) {
           | X => ReasonReact.Update({ ...state, rotationX: rotation })
@@ -44,6 +53,6 @@ let make = (_children) => {
           <IntegerInput value={self.state.rotationY} change={y => self.send(Rotate(Y, y))} />
         </div>
       </div>
-      <div className="scene" />
+      <div className="scene" ref={node => self.send(Ready(Js.Nullable.toOption(node)))} />
     </div>,
 };
