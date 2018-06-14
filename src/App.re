@@ -1,26 +1,49 @@
 [%bs.raw {|require('./App.css')|}];
 
 type state = {
-  playing: bool
+  rotationX: int,
+  rotationY: int
 };
 
+type axis =
+ | X
+ | Y;
+
 type action =
- | Toggle;
+  | Rotate(axis, int);
 
 let component = ReasonReact.reducerComponent("App");
 
 let make = (_children) => {
   ...component,
-  initialState: () => { playing: false },
-  reducer: (action, state) => switch(action) {
-    | Toggle => ReasonReact.Update({ playing: !state.playing })
+  initialState: () => { rotationX: 5, rotationY: 9 },
+  reducer: (action, state: state) => {
+    switch(action) {
+      | Rotate(axis, rotation) => {
+        switch(axis) {
+          | X => ReasonReact.Update({ ...state, rotationX: rotation })
+          | Y => ReasonReact.Update({ ...state, rotationY: rotation })
+        }
+      }
+    }
   },
   render: self =>
-    <div className="App">
-      <button onClick={_ => self.send(Toggle)}>
-        (ReasonReact.string(
-          self.state.playing ? "Pause" : "Play"
-        ))
-      </button>
+    <div className="container">
+      <div className="controls">
+        <h2> (ReasonReact.string("Rotation")) </h2>
+        <div className="control">
+          <label className="control-label">
+            (ReasonReact.string("X: "))
+          </label>
+          <IntegerInput value={self.state.rotationX} change={x => self.send(Rotate(X, x))} />
+        </div>
+        <div className="control">
+          <label className="control-label">
+            (ReasonReact.string("Y: "))
+          </label>
+          <IntegerInput value={self.state.rotationY} change={y => self.send(Rotate(Y, y))} />
+        </div>
+      </div>
+      <div className="scene" />
     </div>,
 };
