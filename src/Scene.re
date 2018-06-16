@@ -1,20 +1,19 @@
+open Common;
 open Three;
 
-type scene = {
-  resize: unit => unit
-};
-
 type state = {
+  gameControls: option(gameControls),
   initialized: bool
 };
 
 type action =
- | Ready(option(Dom.element));
+ | Start(gameControls)
+ | Ready(option(ReasonReact.reactRef));
 
 let component = ReasonReact.reducerComponent("Scene");
 
 let sceneStart = node => {
-  let unwrapped = ReactDOMRe.domElementToObj(node);
+  let unwrapped = ReasonReact.refToJsObj(node);
   let rect = unwrapped##getBoundingClientRect();
 
   let camera = camera(70, rect##width /. rect##height, 1, 1000);
@@ -43,16 +42,18 @@ let sceneStart = node => {
   }
 }
 
-let make = (_) => {
+let make = (children) => {
   ...component,
-  initialState: () => { initialized: false },
+  initialState: () => { initialized: false, gameControls: None },
   reducer: (action, state) => {
     switch (action) {
+      | Start(gc) => ReasonReact.Update({ ...state, gameControls: Some(gc) })
       | Ready(container) => {
         switch(container, state.initialized) {
-          | (Some(node), false) => ReasonReact.UpdateWithSideEffects({ initialized: true }, _ => {
-            let game = sceneStart(node);
-            listen("resize", _ => game.resize());
+          | (Some(node), false) => ReasonReact.UpdateWithSideEffects({ ...state, initialized: true }, self => {
+            let gameControls = sceneStart(node);
+            listen("resize", _ => gameControls.resize());
+            self.send(Start(gameControls));
           })
           | _ => ReasonReact.NoUpdate
         }
@@ -60,5 +61,8 @@ let make = (_) => {
     }
   },
   render: self =>
-    <div className="scene" ref={node => self.send(Ready(Js.Nullable.toOption(node)))} />
+    ReasonReact.createDomElement("div", ~props={
+      "ref": node => Ready(Js.Nullable.toOption(node)) |. self.send,
+      "className": "scene"
+    }, [|children(self.state.gameControls)|])
 };
