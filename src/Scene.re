@@ -25,14 +25,21 @@ let sceneStart = node => {
 
   let scene = scene();
 
+  let gameObjects = ref([]);
+
   let rec loop = () => {
     animate(loop);
+    List.iter(obj => obj.draw(), gameObjects^);
     renderer |. render(scene, camera);
   };
 
   loop();
 
   {
+    addChild: child => {
+      gameObjects := List.append(gameObjects^, [child]);
+      scene |. addChild(child.mesh);
+    },
     resize: () => {
       let rect = unwrapped##getBoundingClientRect();
       camera |. aspectSet(rect##width /. rect##height);
