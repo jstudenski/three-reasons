@@ -5,10 +5,12 @@ open Three;
 
 type spin = {
   draw: unit => unit,
+  updateTexture: texture => unit,
   changeRotation: (int, int) => unit
 };
 
 type state = {
+  texture: texture,
   rotateX: int,
   rotateY: int,
   spin: option(spin)
@@ -34,19 +36,22 @@ let animation = (mesh, rotateX, rotateY) => {
       rx := rotateX;
       ry := rotateY;
     },
+    updateTexture: texture => {
+      mesh |. materialSet(meshConfig(~map=texture) |. meshBasicMaterial);
+    }
   }
 };
 
-let make = (~gameControls: gameControls, ~rotateX, ~rotateY, _children) => {
+let make = (~gameControls: gameControls, ~rotateX, ~rotateY, ~texture: texture, _children) => {
   ...component,
-  initialState: () => { spin: None, rotateX, rotateY },
+  initialState: () => { spin: None, rotateX, rotateY, texture },
   reducer: (action, state) =>
     switch(action) {
       | Spin(spin) => ReasonReact.Update({ ...state, spin: Some(spin) })
     },
   didMount: self => {
     let geo = boxGeo(200, 200, 200);
-    let material = meshBasicMaterial(meshConfig(textureLoader() |. loadTexture(crate)));
+    let material = meshBasicMaterial(meshConfig(texture));
     let mesh = mesh(geo, material);
     let spin = animation(mesh, rotateX, rotateY);
     gameControls.addChild({mesh, draw: spin.draw});
@@ -58,7 +63,11 @@ let make = (~gameControls: gameControls, ~rotateX, ~rotateY, _children) => {
       | Some(s) => {
         if (rotateX != self.state.rotateX || rotateY != self.state.rotateY) {
           s.changeRotation(rotateX, rotateY);
-        }
+        };
+
+        if (self.state.texture != texture) {
+          s.updateTexture(texture);
+        };
       }
     };
 
