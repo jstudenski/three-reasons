@@ -49,7 +49,7 @@ let make = (_children) => {
           gameControls => {
             switch(gameControls) {
               | None => ReasonReact.null
-              | Some(gc) => <Cube gameControls={gc} />
+              | Some(gc) => <Cube gameControls={gc} rotateX={self.state.rotationX} rotateY={self.state.rotationY} />
             }
           }
         )
